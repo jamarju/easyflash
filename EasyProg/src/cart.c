@@ -58,7 +58,7 @@ const char strCartSignature[16] = CART_SIGNATURE;
 const char strChipSignature[4] = CHIP_SIGNATURE;
 
 
-uint8_t readCartHeader()
+uint8_t readCartHeader(void)
 {
     int rv;
 

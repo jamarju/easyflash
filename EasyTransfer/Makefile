@@ -51,14 +51,21 @@ ifeq ($(win32), yes)
     archive_fmt   := zip
     icon_resize   := -resize 32x32
 else
+	LIBDIR        := /usr/local/lib
+	# Link to static wx
+	WXCONFIGLIBS  := $(shell wx-config --static --libs)
+	# Link to static dependencies, too
+	WXCONFIGLIBS  := $(WXCONFIGLIBS:-lpng=$(LIBDIR)/libpng.a)
+	WXCONFIGLIBS  := $(WXCONFIGLIBS:-ljpeg=$(LIBDIR)/libjpeg.a)
+	WXCONFIGLIBS  := $(WXCONFIGLIBS:-ltiff=$(LIBDIR)/libtiff.a)
     app_name      := easytransfer
     ef3xfer_name  := ef3xfer
     cxx           := c++
     cc            := gcc
     outbase       := $(top_dir)/out
-    cxxflags      += $(shell wx-config --cxxflags)
-    cxxlibs       += $(shell wx-config --libs) -lftdi -lpthread
-    clibs         += -lftdi 
+    cxxflags      += $(shell wx-config --static --cxxflags)
+    cxxlibs       += $(LIBDIR)/libftdi.a $(LIBDIR)/libusb.a $(LIBDIR)/libusb-1.0.a $(WXCONFIGLIBS) -lpthread
+    clibs         += $(LIBDIR)/libftdi.a $(LIBDIR)/libusb.a $(LIBDIR)/libusb-1.0.a -framework IOKit -framework CoreFoundation
     archive_fmt   := tar.bz2
     icon_resize   :=
 
@@ -88,7 +95,8 @@ ifeq ($(debug), yes)
 else
     cflags        += -O2
     cxxflags      += -O2
-    ldflags       += -Wl,--strip-all
+    # Not available in macOS clang
+    #ldflags       += -Wl,--strip-all
 endif
 
 ifneq "$(release)" "yes"

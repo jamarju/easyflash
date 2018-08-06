@@ -1,0 +1,85 @@
+easp: Easy SVF Player, a simple USB JTAG programmer for FTDI FT245R
+Copyright (C) 2014 Tilmann Hentze <0xcafe@directbox.com>
+based on:
+  prog_cpld: a very simple USB CPLD programmer
+  Copyright (C) 2009  Koichi Nishida
+
+== License ==
+This program is free software; you can redistribute it and/or
+modify it under the terms of the GNU General Public License
+as published by the Free Software Foundation; either version 3
+of the License, or (at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program; if not, write to the Free Software
+Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+
+== Description ==
+Simple JTAG programmer for FTDI FT245R [1], used in skoe's EasyFlash 3 [2].
+Reads Serial Vector Format files (SVF) [3] and bit bangs the state transitions
+into the FT245R.
+
+== Requirements ==
+gcc
+libc6
+libftdi [4]
+libusb [5]
+
+== Compilation ==
+* If you have (GNU-) make installed simply execute make in the source directory.
+* If you only have bash, run ./make.sh
+* If you have neither type: gcc -Wall -lftdi -o easp easp.c
+
+== Usage ==
+easp [options] <svf file>
+ options:
+   -b <kbit/s> set bit rate
+   -c disable verification of TDO outputs
+   -d <device number> use FTDI device <number>
+   -l list FTDI USB devices
+   -p <product_id> use a different USB product ID
+   -v verbose
+   -h help
+
+=== Programming EasyFlash3 firmware ===
+# Connect it to the C64 expansion port and the USB port of your PC.
+# Switch on the the C64.
+# Then start easp with:
+   ./easp -p 0x8738 -v <svf_file>
+# When everything worked right, press the upper left button on the EF3 to
+  reset to BASIC. You now can use EasyProg on the C64 to program the KERNAL
+  and user cartridges.
+
+=== Usage examples ===
+# List all easyflash devices:
+  ./easp -p 0x8738 -l
+
+# Write SVF file to FT245R device 1:
+  ./easp -p 0x6001 -d 1 file.svf
+
+== Troubleshooting ==
+* If you cannot access the FT245R because of missing permissions to open
+  the USB device, on Debian derived systems it might help to create a new udev
+  rule file (located in /etc/udev/rules.d) with the following content:
+  --snip--
+  SUBSYSTEM=="usb", ATTRS{idVendor}=="0403", ATTRS{idProduct}=="8738", MODE="0664", GROUP="plugdev"
+  --snap--
+  and add your user account to the group plugdev. The group name may different
+  in your operating system distribution.
+  In older systems it might look like this:
+  --snip--
+  SUBSYSTEM=="usb_device", ATTRS{idVendor}=="0403", ATTRS{idProduct}=="8738", MODE="0664", GROUP="plugdev"
+  --snap--
+
+== References ==
+[1] Future Technology Devices International Ltd. <http://www.ftdichip.com/>
+[2] EasyFlash 3 <http://skoe.de/easyflash>
+[3] Serial Vector Format
+  <http://www.xilinx.com/support/documentation/application_notes/xapp503.pdf>
+[4] libftdi <http://www.intra2net.com/en/developer/libftdi/>
+[5] libusb <http://libusb.info/>

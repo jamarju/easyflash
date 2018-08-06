@@ -11,7 +11,7 @@
         .import initlib, donelib, copydata
         .import zerobss
         .import BSOUT
-        .import __RAM_START__, __RAM_SIZE__     ; Linker generated
+        .import __MAIN_START__, __MAIN_SIZE__     ; Linker generated
 
         .include "zeropage.inc"
         .include "c64.inc"
@@ -47,9 +47,9 @@ reset:
 
         ; and here
         ; Set argument stack ptr
-        lda #<(__RAM_START__ + __RAM_SIZE__)
+        lda #<(__MAIN_START__ + __MAIN_SIZE__)
         sta sp
-        lda #>(__RAM_START__ + __RAM_SIZE__)
+        lda #>(__MAIN_START__ + __MAIN_SIZE__)
         sta sp + 1
 
         jsr initlib

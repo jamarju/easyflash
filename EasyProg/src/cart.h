@@ -105,7 +105,7 @@ extern const char*  aStrInternalCartTypeName[];
 extern const char   strCartSignature[16];
 extern const char   strChipSignature[4];
 
-uint8_t readCartHeader();
+uint8_t readCartHeader(void);
 void printCartInfo(void);
 uint8_t __fastcall__ readNextBankHeader(BankHeader* pBankHeader);
 

@@ -60,7 +60,7 @@ obj:
 	mkdir -p $@
 
 $(name).prg: obj/crt0.o $(obj) src/ld.cfg $(libef3usb) $(libeload)
-	ld65 -o $@ -m $@.map -C src/ld.cfg obj/crt0.o $(obj) \
+	ld65 -o $@ -vm -m $@.map -C src/ld.cfg obj/crt0.o $(obj) \
 		--lib  $(libef3usb) $(libeload) \
 		-L /usr/local/lib/cc65/lib --lib c64.lib
 	cat $@.map | grep -e "^Name\|^CODE\|^DATA\|^BSS\|^RODATA\|^LOWCODE"

@@ -1,0 +1,66 @@
+== 2014-01-01 ==
+  * libusbx is merging with libusb again
+  * fix build of i386-linux-gnu on x86_amd64-linux-gnu
+  
+== 2014-01-01 ==
+  * README: update e-mail address, add usage examples, minor formatting,
+    changed libusbx url
+  * easp.c: return non-zero when svf file cannot be opened,
+    only return exit code of ListDevices.
+
+== 2013-01-03 ==
+  * Updated the snapshot URL for libftdi
+  * include libftdi source package in binary archive 
+  * update copyright year, URLs and versions for libftdi and libusbx
+    
+== 2012-04-28 ==
+  * use libusbx in place of libusb-1.0-pbatard for the static crosscompile.
+
+== 2012-04-24 ==
+  * Reset the FTDI chip to serial mode after programming.
+
+== 2012-01-17 ==
+  * add ftdi-ef3 and convert it to use libftdi-1.0
+
+== 2012-01-05 ==
+  * deliver .DLLs since static linking reportedly does not work for Windows
+  * reformat this very Changelog to enjoy two more colours through the
+    syntax hilighting
+
+== 2011-12-26 ==
+  * fix wrong error message if file not found.
+  * use getopt for convenience.
+  * :: means the option argument is optional, not the option itself.
+  * mind the option order for -l
+
+== 2011-08-29 ==
+  * cleaned up Makefile.static, can build linux-ia32 now in x86_64
+  * make return codes more uniform
+  * cosmetic Makefile changes
+
+== 2011-08-25 ==
+  * added new USB PID to README -> Troubleshooting
+  * generates executable with .exe extension under mingw
+  * added sources of libusb and libftdi
+  * use zip for mingw dist target
+  * make it work
+
+== 2011-08-23 ==
+  * updated README
+  * updated Changelog
+  * added -p command line switch for selection of different USB product ID
+
+== 2011-08-19 ==
+  * fixed typo
+  * support for crosscompiling with mingw
+
+== 2011-08-15 ==
+  * Some code reformatting.
+  * Give notice that programming started. Thank you, enthusi, for suggestion.
+  * Give instruction how to program the EF3. Thank you mactron and lemming, for
+    suggestion.
+
+== 2011-08-12 ==
+  * added Makefile, thanks to Ingo Korb for inspiration.
+  * updated README  
+

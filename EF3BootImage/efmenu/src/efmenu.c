@@ -643,7 +643,7 @@ static void fill_directory(void)
  */
 static void init_screen(void)
 {
-    VIC.bordercolor = COLOR_BLUE;
+    VIC.bordercolor = COLOR_LIGHTGREEN;
 
     /* set VIC base address to $4000 */
     CIA2.pra = 0x14 + 2;

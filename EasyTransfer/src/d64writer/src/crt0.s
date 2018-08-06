@@ -5,12 +5,14 @@
 ; This must be the *first* file on the linker command line
 ;
 
+    .export         __STARTUP__ : absolute = 1      ; Override c64.lib's crt0.s
+
     .import        initlib, donelib, callirq
     .import        zerobss
     .import        callmain
     .import        RESTOR, BSOUT, CLRCH
     .import        __INTERRUPTOR_COUNT__
-    .import        __RAM_START__, __RAM_SIZE__    ; Linker generated
+    .import        __MAIN_START__, __MAIN_SIZE__    ; Linker generated
 
     .importzp       sp, sreg, regsave
     .importzp       ptr1, ptr2, ptr3, ptr4
@@ -18,8 +20,6 @@
     .importzp       regbank
 
     zpspace = 26
-
-IRQVec              := $0314
 
 ; ------------------------------------------------------------------------
 ; Place the startup code in a special segment.
@@ -38,12 +38,6 @@ Head:   .word   @Next
 ; ------------------------------------------------------------------------
 ; Actual code
 
-        ldx #zpspace-1
-L1:     lda sp,x
-        sta zpsave,x    ; Save the zero page locations we need
-        dex
-        bpl L1
-
         lda #$36        ; Hide BASIC/CART
         sta $01
 
@@ -61,9 +55,9 @@ L1:     lda sp,x
         stx spsave      ; Save the system stack ptr
 
         ; Set argument stack ptr
-        lda #<(__RAM_START__ + __RAM_SIZE__)
+        lda #<(__MAIN_START__ + __MAIN_SIZE__)
         sta sp
-        lda #>(__RAM_START__ + __RAM_SIZE__)
+        lda #>(__MAIN_START__ + __MAIN_SIZE__)
         sta sp+1
 
         ; Call module constructors
@@ -72,29 +66,8 @@ L1:     lda sp,x
         ; Call main - will never return
         jmp callmain
 
-; ------------------------------------------------------------------------
-; The IRQ vector jumps here, if condes routines are defined with type 2.
-
-IRQStub:
-        cld             ; Just to be sure
-        jsr callirq     ; Call the functions
-        jmp IRQInd      ; Jump to the saved IRQ vector
-
-; ------------------------------------------------------------------------
-.data
-
-IRQInd:
-        jmp $0000
-
-
-; ------------------------------------------------------------------------
-.segment "ZPSAVE"
-
-zpsave:
-        .res zpspace
-
-; ------------------------------------------------------------------------
-.bss
-
+.segment          "INIT"
 spsave:
         .res 1
+
+

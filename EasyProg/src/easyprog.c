@@ -57,7 +57,7 @@ static void toggleFastLoader(void);
 static uint8_t returnTrue(void);
 static uint8_t haveValidFlash(void);
 static uint8_t isEF3(void);
-static void updateFastLoaderText();
+static void updateFastLoaderText(void);
 
 /******************************************************************************/
 
@@ -578,7 +578,7 @@ static void __fastcall__ execMenu(ScreenMenu* pMenu)
 /**
  * Update the "Fast loader enabled:    " text.
  */
-static void updateFastLoaderText()
+static void updateFastLoaderText(void)
 {
     char* pStr;
 

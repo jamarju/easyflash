@@ -140,7 +140,7 @@ void EasyTransferMainFrame::OnButton(wxCommandEvent& event)
         pWindow = m_pNotebook->GetCurrentPage();
         if (pWindow)
         {
-            pWindow->AddPendingEvent(event);
+            pWindow->GetEventHandler()->AddPendingEvent(event);
         }
     }
     else if (event.GetEventObject() == m_pButtonQuit)
