@@ -23,7 +23,7 @@ Follow the instructions at [brew.sh](https://brew.sh):
 ### Cross dev tools and ftdi libs:
 
 ```
-brew install acme cc65 libftdi0 cmake confuse
+brew install acme cc65 libftdi0 cmake confuse imagemagick
 brew install wxmac --with-static
 ```
 
