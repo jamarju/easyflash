@@ -41,7 +41,7 @@ EASYFLASH_KILL    = $04
 ; ------------------------------------------------------------------------
 ; Actual code
 
-.segment "INIT"
+.segment "ONCE"
 
 cold_start:
 reset:
