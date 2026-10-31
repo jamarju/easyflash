@@ -47,7 +47,7 @@ $(outbase)/$(app_name)$(version_suffix).tar.bz2: \
 # 
 $(outdir)/$(app_name): $(obj) | $(outdir) check-environment
 	$(cxx) $(ldflags) $(obj) -o $@ \
-		`wx-config --libs`
+		$(WX_LIBS)
 
 ###############################################################################
 # This rule can create the directories we need
@@ -71,7 +71,7 @@ $(objdir)/%.o: $(srcdir)/%.c $(headers) | $(objdir) check-environment
 # This rule can compile <base>/res/*.png to <here>/out/obj/*.xpm
 #
 $(objdir)/%.xpm: $(srcdir)/../res/%.png | $(objdir) check-environment
-	convert $< $@.tmp.xpm
+	$(IMAGEMAGICK) $< $@.tmp.xpm
 	cat $@.tmp.xpm | sed "\
 			s/static char/static const char/;\
 			s/[\._]tmp//;\

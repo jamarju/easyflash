@@ -30,7 +30,7 @@ set_target_properties ( ftdi1 PROPERTIES CLEAN_DIRECT_OUTPUT 1 )
 
 
 # Dependencies
-target_link_libraries(ftdi1 ${LIBUSB_LIBRARIES})
+target_link_libraries(ftdi1 ${LIBUSB_LIBRARIES} ${EASYFLASH_PLATFORM_LIBRARIES})
 
 install ( TARGETS ftdi1
           RUNTIME DESTINATION bin
@@ -40,7 +40,7 @@ install ( TARGETS ftdi1
 
 if ( STATICLIBS )
   add_library(ftdi1-static STATIC ${c_sources})
-  target_link_libraries(ftdi1-static ${LIBUSB_LIBRARIES})
+  target_link_libraries(ftdi1-static ${LIBUSB_LIBRARIES} ${EASYFLASH_PLATFORM_LIBRARIES})
   set_target_properties(ftdi1-static PROPERTIES OUTPUT_NAME "ftdi1")
   set_target_properties(ftdi1-static PROPERTIES CLEAN_DIRECT_OUTPUT 1)
   install ( TARGETS ftdi1-static

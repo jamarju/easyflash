@@ -227,7 +227,7 @@ int connect_ftdi(void)
     }
 
     ftdi_usb_reset(&m_ftdic);
-    ftdi_usb_purge_buffers(&m_ftdic);
+    ftdi_tcioflush(&m_ftdic);
 
     m_ftdi_connected = 1;
     return 1;

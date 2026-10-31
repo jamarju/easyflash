@@ -17,17 +17,49 @@ xcode-select --install
 Follow the instructions at [brew.sh](https://brew.sh):
 
 ```
-/usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 ```
 
 ### Cross dev tools and ftdi libs:
 
 ```
-brew install acme cc65 libftdi0 cmake confuse imagemagick
-brew install wxmac --with-static
+brew install acme cc65 libftdi libusb cmake confuse imagemagick python
 ```
 
 (`confuse` and `cmake` are required for the FT245 tools, see below)
+
+### Static wxWidgets
+
+The host tools link Homebrew's `libftdi` and `libusb` static archives. wxWidgets
+must also be built statically: Homebrew's `wxwidgets` formula currently ships
+shared libraries only. Build the wxWidgets archives from source once:
+
+```
+WX_VERSION=3.3.3
+WX_WORK="$HOME/.cache/easyflash/wx-$WX_VERSION"
+WX_PREFIX="$HOME/.local/easyflash/wx-static"
+mkdir -p "$WX_WORK"
+curl -L "https://github.com/wxWidgets/wxWidgets/releases/download/v$WX_VERSION/wxWidgets-$WX_VERSION.tar.bz2" -o "$WX_WORK/wxWidgets-$WX_VERSION.tar.bz2"
+tar -xjf "$WX_WORK/wxWidgets-$WX_VERSION.tar.bz2" -C "$WX_WORK"
+(
+cd "$WX_WORK/wxWidgets-$WX_VERSION"
+./configure --prefix="$WX_PREFIX" --with-osx_cocoa \
+    --disable-shared --disable-monolithic --enable-xrc --enable-html \
+    --with-libpng=builtin --with-libjpeg=builtin --with-libtiff=builtin \
+    --with-libwebp=builtin --with-regex=builtin --with-zlib=builtin \
+    --with-expat=builtin --without-libcurl --with-macosx-version-min=10.10 \
+    --disable-tests --disable-precomp-headers
+make -j"$(sysctl -n hw.logicalcpu)"
+make install
+)
+```
+
+`make` in EasyTransfer and EasySplit uses this prefix by default. To use a
+different static wxWidgets build, pass `WX_CONFIG=/path/to/wx-config`.
+Static linking removes Homebrew library dependencies at runtime, but it does
+not make a Tahoe arm64 build portable to older macOS releases or Intel Macs.
+Static archives carry their own minimum-OS metadata; support for an older
+system requires building every dependency with a matching SDK and architecture.
 
 ### exomizer
 
@@ -45,7 +77,8 @@ Not strictly needed in the manufacturing process but it needs to be in the `$PAT
 
 `easp` is the tool required to program the CPLD, this is the very first step to do on an new EF3 before flashing the menu. 
 
-The Makefile of the original `easp` package has been modified to generate a statically linked that doesn't depend on homebrew libs so that it can be moved to another computer.
+On macOS, `easp` links Homebrew's `libftdi` and `libusb` static archives, so it
+does not need those Homebrew libraries at runtime.
 
 To compile:
 
@@ -85,13 +118,17 @@ However, this can be done without leaving macOS with two example tools that come
 To compile:
 
 ```
-cd ManufacturerTools/FT245/libftdi-1.*
+cd ManufacturerTools/FT245/libftdi1-1.4
 mkdir build
 cd build
-cmake -DCMAKE_INSTALL_PREFIX="/usr/local" ../
+cmake -DCMAKE_INSTALL_PREFIX="$HOME/.local/easyflash/ft245" \
+    -DEASYFLASH_STATIC_TOOLS=ON -DFTDIPP=OFF -DBUILD_TESTS=OFF \
+    -DDOCUMENTATION=OFF ../
 make
 ```
-**TODO: these tools are not statically linked and will depend on homebrew libraries (libconfuse and libusb).**
+
+The command-line tools link against static `libftdi`, `libusb`, and `libconfuse`
+archives. Apple system frameworks remain runtime dependencies.
 
 **NOTE: the EF3 need not be plugged into the C64 for neither tool to work.**
 
@@ -175,8 +212,6 @@ make
 ```
 
 The result is `EasySplit/out/easysplit/easysplit`.
-
-**Note: untested**
 
 ### Menu image (menu-init.crt)
 

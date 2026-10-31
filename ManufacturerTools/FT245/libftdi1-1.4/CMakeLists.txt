@@ -1,3 +1,5 @@
+cmake_minimum_required(VERSION 3.10 FATAL_ERROR)
+
 # Project
 project(libftdi1)
 set(MAJOR_VERSION 1)
@@ -12,7 +14,6 @@ if("${CMAKE_BUILD_TYPE}" STREQUAL "")
    set(CMAKE_BUILD_TYPE     RelWithDebInfo)
 endif("${CMAKE_BUILD_TYPE}" STREQUAL "")
 set(CMAKE_COLOR_MAKEFILE ON)
-cmake_minimum_required(VERSION 2.6 FATAL_ERROR)
 
 add_definitions(-Wall)
 
@@ -23,6 +24,22 @@ if(${CMAKE_BUILD_TYPE} STREQUAL Debug)
 endif(${CMAKE_BUILD_TYPE} STREQUAL Debug)
 
 # find libusb
+option(EASYFLASH_STATIC_TOOLS "Link the FT245 command-line tools against static Homebrew libraries" OFF)
+if(APPLE AND EASYFLASH_STATIC_TOOLS)
+  # Homebrew ships both .a and .dylib files for libusb and libconfuse. Prefer
+  # archives so the command-line tools can run without Homebrew installed.
+  set(CMAKE_FIND_LIBRARY_SUFFIXES .a)
+  set(FTDI_TOOLS_LIBRARY ftdi1-static)
+  find_library(EASYFLASH_IOKIT_FRAMEWORK IOKit)
+  find_library(EASYFLASH_COREFOUNDATION_FRAMEWORK CoreFoundation)
+  find_library(EASYFLASH_SECURITY_FRAMEWORK Security)
+  if(NOT EASYFLASH_IOKIT_FRAMEWORK OR NOT EASYFLASH_COREFOUNDATION_FRAMEWORK OR NOT EASYFLASH_SECURITY_FRAMEWORK)
+    message(FATAL_ERROR "Could not find the IOKit, CoreFoundation, and Security frameworks")
+  endif()
+  set(EASYFLASH_PLATFORM_LIBRARIES ${EASYFLASH_IOKIT_FRAMEWORK} ${EASYFLASH_COREFOUNDATION_FRAMEWORK} ${EASYFLASH_SECURITY_FRAMEWORK})
+else()
+  set(FTDI_TOOLS_LIBRARY ftdi1)
+endif()
 find_package ( USB1 REQUIRED )
 include_directories ( ${LIBUSB_INCLUDE_DIR} )
 

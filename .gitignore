@@ -28,9 +28,11 @@ a.out
 .project
 
 EasyProg/easyprog
+ManufacturerTools/easp-2014-01-09/easp
 
 EasyLoader/build/
 EasyLoader/.deps/
+ManufacturerTools/FT245/libftdi1-1.4/build/
 
 Hardware/*gerber*
 Hardware/*/*gerber*

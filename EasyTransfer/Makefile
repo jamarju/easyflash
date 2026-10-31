@@ -24,6 +24,12 @@
 
 here := $(abspath $(dir $(lastword $(MAKEFILE_LIST))))
 top_dir := $(here)
+host_os := $(shell uname -s)
+ifeq ($(host_os),Darwin)
+    IMAGEMAGICK ?= magick
+else
+    IMAGEMAGICK ?= convert
+endif
 
 # don't delete intermediate files
 .SECONDARY:
@@ -38,6 +44,7 @@ cflags         = $(CFLAGS)
 clibs          = $(CLIBS)
 cxxlibs        = $(CXXLIBS)
 ldflags        = $(LDFLAGS)
+PYTHON         ?= python3
 
 ifeq ($(win32), yes)
     app_name      := EasyTransfer.exe
@@ -50,6 +57,44 @@ ifeq ($(win32), yes)
     outbase       := $(top_dir)/out_win32
     archive_fmt   := zip
     icon_resize   := -resize 32x32
+else ifeq ($(host_os), Darwin)
+    app_name      := easytransfer
+    ef3xfer_name  := ef3xfer
+    cxx           := c++
+    cc            := cc
+    outbase       := $(top_dir)/out
+    archive_fmt   := tar.bz2
+    icon_resize   :=
+
+    # Link host executables statically so they do not need Homebrew libraries
+    # at runtime. Build wxWidgets from source as documented in the root README.
+    HOMEBREW_PREFIX ?= $(shell brew --prefix 2>/dev/null)
+    LIBFTDI_PREFIX  ?= $(shell brew --prefix libftdi 2>/dev/null)
+    LIBUSB_PREFIX   ?= $(shell brew --prefix libusb 2>/dev/null)
+    STATIC          ?= yes
+
+    ftdi_cflags := -I$(LIBFTDI_PREFIX)/include/libftdi1 -I$(LIBUSB_PREFIX)/include/libusb-1.0
+    cflags      += $(ftdi_cflags)
+
+    ifeq ($(STATIC),yes)
+        WX_CONFIG ?= $(HOME)/.local/easyflash/wx-static/bin/wx-config
+        wx_cxxflags := $(shell $(WX_CONFIG) --static=yes --cxxflags 2>/dev/null)
+        wx_libs     := $(shell $(WX_CONFIG) --static=yes --libs 2>/dev/null)
+        ftdi_libs := $(LIBFTDI_PREFIX)/lib/libftdi1.a $(LIBUSB_PREFIX)/lib/libusb-1.0.a
+    else
+        WX_CONFIG ?= wx-config
+        wx_cxxflags := $(shell $(WX_CONFIG) --cxxflags)
+        wx_libs     := $(shell $(WX_CONFIG) --libs)
+        ftdi_libs   := -L$(LIBFTDI_PREFIX)/lib -lftdi1 -L$(LIBUSB_PREFIX)/lib -lusb-1.0
+    endif
+
+    cxxflags += $(ftdi_cflags) $(wx_cxxflags)
+    cxxlibs  += $(ftdi_libs) $(wx_libs) -lpthread -framework IOKit -framework CoreFoundation -framework Security
+    clibs    += $(ftdi_libs) -framework IOKit -framework CoreFoundation -framework Security
+
+    # Use Homebrew's prefix by default; callers can override PREFIX for installs.
+    PREFIX ?= $(HOMEBREW_PREFIX)
+
 else
 	LIBDIR        := /usr/local/lib
 	# Link to static wx
@@ -115,7 +160,7 @@ srcdir        := src
 tmp_install   := $(outbase)/tmp-install
 
 # Where to install on "make install"?
-inst_prefix   := /usr/local
+inst_prefix   ?= $(if $(PREFIX),$(PREFIX),/usr/local)
 
 bin_inst_dir  := $(inst_prefix)/bin
 res_inst_dir  := $(inst_prefix)/share
@@ -133,9 +178,22 @@ ifeq ($(win32), yes)
     include make/win32-cross-mingw/cross-wx.mk
     include make/win32-cross-mingw/cross-ftdi.mk
 pre_deps: libftdi libusb install-wxwidgets
+else ifeq ($(host_os),Darwin)
+ifeq ($(STATIC),yes)
+pre_deps: check-static-deps
 else
 pre_deps:
 endif
+else
+pre_deps:
+endif
+
+.PHONY: check-static-deps
+check-static-deps:
+	@test -x "$(WX_CONFIG)" || { echo "Static wxWidgets not found at '$(WX_CONFIG)'; build it as described in the root README or set WX_CONFIG"; exit 1; }
+	@$(WX_CONFIG) --static=yes --libs 2>/dev/null | grep -q '\.a' || { echo "WX_CONFIG must point to a static wxWidgets build"; exit 1; }
+	@test -f "$(LIBFTDI_PREFIX)/lib/libftdi1.a" || { echo "Homebrew libftdi static archive is missing; install libftdi"; exit 1; }
+	@test -f "$(LIBUSB_PREFIX)/lib/libusb-1.0.a" || { echo "Homebrew libusb static archive is missing; install libusb"; exit 1; }
 
 
 ###############################################################################
@@ -274,13 +332,13 @@ $(objdir)/%.o: $(objdir)/%.c $(headers) | pre_deps
 
 $(objdir)/%.c: $(srcdir)/%.prg | $(objdir) pre_deps
 	mkdir -p $(dir $@)
-	python make/bin2c.py $< $@ $(notdir $(basename $@))
+	$(PYTHON) make/bin2c.py $< $@ $(notdir $(basename $@))
 
 $(objdir)/%.res.o: $(srcdir)/%.rc | $(objdir) pre_deps
 	$(windres) -I $(objdir) $< $@
 
 $(objdir)/%.xpm: $(srcdir)/../res/%.png | $(objdir) pre_deps
-	convert $(icon_resize) $< $@.tmp.xpm
+	$(IMAGEMAGICK) $(icon_resize) $< $@.tmp.xpm
 	cat $@.tmp.xpm | sed "\
 			s/static char/static const char/;\
 			s/[\._]tmp//;\
@@ -302,7 +360,7 @@ $(srcdir)/d64writer/d64writer.prg: always
 $(objdir)/EasyTransfer.res.o: $(objdir)/easytransfer.ico
 
 $(objdir)/%.ico: $(srcdir)/../res/%.png | $(objdir) pre_deps
-	convert $< $@
+	$(IMAGEMAGICK) $< $@
 
 $(outdir)/%.dll: $(tmp_install)/bin/%.dll pre_deps
 	cp $< $@

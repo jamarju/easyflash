@@ -709,7 +709,7 @@ int main(int argc, char *argv[])
   }
   if (!reset_tap(&ftdic, &current_state, mode))  goto ERROR1;
   // purge the usb buffers and be sure to empty the rx buffer
-  if (ftdi_usb_purge_buffers(&ftdic)) goto ERROR1;
+  if (ftdi_tcioflush(&ftdic)) goto ERROR1;
   while (ftdi_read_data(&ftdic, &scratch, 1));
   printf("started programming, please relax...\n");
   if (!parse_svf(fp, &ftdic, v, &current_state, &no_match, mode)) {

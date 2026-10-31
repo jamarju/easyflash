@@ -44,7 +44,7 @@ if ( CONFUSE_FOUND )
   )
 
   add_executable ( ftdi_eeprom main.c )
-  target_link_libraries ( ftdi_eeprom ftdi1 ${CONFUSE_LIBRARIES} )
+  target_link_libraries ( ftdi_eeprom ${FTDI_TOOLS_LIBRARY} ${CONFUSE_LIBRARIES} )
   if ( LIBINTL_FOUND )
     target_link_libraries ( ftdi_eeprom ${LIBINTL_LIBRARIES} )
   endif ()

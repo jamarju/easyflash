@@ -24,6 +24,22 @@
 
 # Where to install on "make install"?
 inst_prefix   := /usr/local
+host_os       := $(shell uname -s)
+ifeq ($(host_os),Darwin)
+    IMAGEMAGICK ?= magick
+    STATIC      ?= yes
+    ifeq ($(STATIC),yes)
+        WX_CONFIG ?= $(HOME)/.local/easyflash/wx-static/bin/wx-config
+        WX_STATIC := --static=yes
+    else
+        WX_CONFIG  ?= wx-config
+    endif
+else
+    IMAGEMAGICK ?= convert
+    WX_CONFIG   ?= wx-config
+endif
+WX_CXXFLAGS := $(shell $(WX_CONFIG) $(WX_STATIC) --cxxflags 2>/dev/null)
+WX_LIBS     := $(shell $(WX_CONFIG) $(WX_STATIC) --libs 2>/dev/null)
 
 app_name      := easysplit
 
@@ -36,12 +52,12 @@ cc            := gcc
 ifeq ($(debug), yes)
     outbase       := out_debug
     ccflags       := -g
-    cxxflags      := -g $(shell wx-config --cxxflags)
+    cxxflags      := -g $(WX_CXXFLAGS)
     ldflags       := -g
 else
     outbase       := out
     ccflags       := -O2
-    cxxflags      := -O2 $(shell wx-config --cxxflags)
+    cxxflags      := -O2 $(WX_CXXFLAGS)
     ldflags       :=
 endif
 
@@ -93,3 +109,9 @@ include make/common/install.mk
 
 .PHONY: check-environment
 check-environment:
+ifeq ($(host_os),Darwin)
+ifeq ($(STATIC),yes)
+	@test -x "$(WX_CONFIG)" || { echo "Static wxWidgets not found at '$(WX_CONFIG)'; build it as described in the root README or set WX_CONFIG"; exit 1; }
+	@$(WX_CONFIG) --static=yes --libs 2>/dev/null | grep -q '\.a' || { echo "WX_CONFIG must point to a static wxWidgets build"; exit 1; }
+endif
+endif
