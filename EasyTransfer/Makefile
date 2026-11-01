@@ -62,6 +62,8 @@ else ifeq ($(host_os), Darwin)
     ef3xfer_name  := ef3xfer
     cxx           := c++
     cc            := cc
+    # Older Apple clang defaults to C++98; current wxWidgets needs C++11.
+    cxxflags       = -std=c++11 $(CXXFLAGS)
     outbase       := $(top_dir)/out
     archive_fmt   := tar.bz2
     icon_resize   :=
@@ -180,7 +182,7 @@ ifeq ($(win32), yes)
 pre_deps: libftdi libusb install-wxwidgets
 else ifeq ($(host_os),Darwin)
 ifeq ($(STATIC),yes)
-pre_deps: check-static-deps
+pre_deps: check-static-usb-deps
 else
 pre_deps:
 endif
@@ -188,10 +190,11 @@ else
 pre_deps:
 endif
 
-.PHONY: check-static-deps
-check-static-deps:
+.PHONY: check-static-deps check-static-usb-deps
+check-static-deps: check-static-usb-deps
 	@test -x "$(WX_CONFIG)" || { echo "Static wxWidgets not found at '$(WX_CONFIG)'; build it as described in the root README or set WX_CONFIG"; exit 1; }
 	@$(WX_CONFIG) --static=yes --libs 2>/dev/null | grep -q '\.a' || { echo "WX_CONFIG must point to a static wxWidgets build"; exit 1; }
+check-static-usb-deps:
 	@test -f "$(LIBFTDI_PREFIX)/lib/libftdi1.a" || { echo "Homebrew libftdi static archive is missing; install libftdi"; exit 1; }
 	@test -f "$(LIBUSB_PREFIX)/lib/libusb-1.0.a" || { echo "Homebrew libusb static archive is missing; install libusb"; exit 1; }
 
@@ -284,7 +287,16 @@ outdoc  := $(addprefix $(outdir)/, $(doc))
 endif
 
 # Poor men's dependencies: Let all files depend from all header files
-headers := $(wildcard $(srcdir)/*.h) $(xpm)
+headers := $(wildcard $(srcdir)/*.h)
+
+# Only the GUI needs wxWidgets and generated icons. Keep ef3xfer buildable
+# with the USB libraries and C64 cross compiler alone.
+$(addprefix $(objdir)/, $(src_cpp:.cpp=.o)): $(xpm)
+ifeq ($(host_os),Darwin)
+ifeq ($(STATIC),yes)
+$(addprefix $(objdir)/, $(src_cpp:.cpp=.o)) $(xpm) $(outdir)/$(app_name): | check-static-deps
+endif
+endif
 
 ###############################################################################
 ###############################################################################

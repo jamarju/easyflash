@@ -23,16 +23,29 @@ Follow the instructions at [brew.sh](https://brew.sh):
 ### Cross dev tools and ftdi libs:
 
 ```
-brew install acme cc65 libftdi libusb cmake confuse imagemagick python
+brew install acme cc65 libftdi libusb confuse imagemagick python
+brew install --cask cmake-app
 ```
+
+Use `libftdi`, which provides the libftdi1 API. The old `libftdi0` formula is no longer available; the host tools in this tree use libftdi1.
+
+The `cmake-app` cask includes the `cmake` command and provides a prebuilt binary for macOS 12 and later. The `cmake` formula can instead trigger a lengthy source build on older Macs. Other Homebrew formulae may still require the `cmake` formula as a build dependency; the cask does not satisfy that dependency.
 
 (`confuse` and `cmake` are required for the FT245 tools, see below)
 
+### Shared wxWidgets
+
+For a Homebrew-only GUI build, install wxWidgets with:
+
+```
+brew install wxwidgets
+```
+
+Then build EasyTransfer and EasySplit with `make STATIC=no`. These builds require the Homebrew libraries at runtime. The default `make` targets use static libraries and require the source build described below.
+
 ### Static wxWidgets
 
-The host tools link Homebrew's `libftdi` and `libusb` static archives. wxWidgets
-must also be built statically: Homebrew's `wxwidgets` formula currently ships
-shared libraries only. Build the wxWidgets archives from source once:
+By default, the host tools link Homebrew's `libftdi` and `libusb` static archives. For the default GUI builds, wxWidgets must also be built statically: Homebrew's `wxwidgets` formula currently ships shared libraries only. Build the wxWidgets archives from source once:
 
 ```
 WX_VERSION=3.3.3
@@ -54,18 +67,17 @@ make install
 )
 ```
 
-`make` in EasyTransfer and EasySplit uses this prefix by default. To use a
-different static wxWidgets build, pass `WX_CONFIG=/path/to/wx-config`.
-Static linking removes Homebrew library dependencies at runtime, but it does
-not make a Tahoe arm64 build portable to older macOS releases or Intel Macs.
-Static archives carry their own minimum-OS metadata; support for an older
-system requires building every dependency with a matching SDK and architecture.
+`make` in EasyTransfer and EasySplit uses this prefix by default. To use a different static wxWidgets build, pass `WX_CONFIG=/path/to/wx-config`. Static linking removes Homebrew library dependencies at runtime, but it does not make a Tahoe arm64 build portable to older macOS releases or Intel Macs. Static archives carry their own minimum-OS metadata; support for an older system requires building every dependency with a matching SDK and architecture.
 
 ### exomizer
 
-The Homebrew recipe for `exomizer` is broken (segfaults), so get the exomizer binary from here: [www.popelganda.de/relaunch64.html](http://www.popelganda.de/relaunch64.html).
+Install it with Homebrew:
 
-Put it somewhere in the `$PATH`.
+```
+brew install exomizer
+```
+
+Exomizer 3.1.2 from Homebrew runs the EasyProg compression command on Intel macOS 12.7.6. Older versions of this guide recommended an external binary because the Homebrew version available at the time crashed.
 
 ### cartconv
 
@@ -77,8 +89,7 @@ Not strictly needed in the manufacturing process but it needs to be in the `$PAT
 
 `easp` is the tool required to program the CPLD, this is the very first step to do on an new EF3 before flashing the menu. 
 
-On macOS, `easp` links Homebrew's `libftdi` and `libusb` static archives, so it
-does not need those Homebrew libraries at runtime.
+On macOS, `easp` links Homebrew's `libftdi` and `libusb` static archives, so it does not need those Homebrew libraries at runtime.
 
 To compile:
 
@@ -127,8 +138,7 @@ cmake -DCMAKE_INSTALL_PREFIX="$HOME/.local/easyflash/ft245" \
 make
 ```
 
-The command-line tools link against static `libftdi`, `libusb`, and `libconfuse`
-archives. Apple system frameworks remain runtime dependencies.
+The command-line tools link against static `libftdi`, `libusb`, and `libconfuse` archives. Apple system libraries and frameworks remain runtime dependencies.
 
 **NOTE: the EF3 need not be plugged into the C64 for neither tool to work.**
 
@@ -181,6 +191,8 @@ make
 ```
 
 The results are `easytransfer` (GUI tool) and `ef3xfer` (CLI tool) in `EasyTransfer/out/easytransfer/`.
+
+To build only the command-line tool, run `make ef3xfer` in `EasyTransfer`. This target needs cc65, libftdi and libusb, but does not require wxWidgets or ImageMagick. The C64 disk writer is compiled with cc65 and embedded in the tool.
 
 Run the tools with the EF3 plugged in the C64, the C64 on, the USB cable plugged in and the **EF3 jumpers in the DATA position**.
 

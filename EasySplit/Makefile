@@ -52,13 +52,18 @@ cc            := gcc
 ifeq ($(debug), yes)
     outbase       := out_debug
     ccflags       := -g
-    cxxflags      := -g $(WX_CXXFLAGS)
+    cxxflags      := -g $(CXXFLAGS) $(WX_CXXFLAGS)
     ldflags       := -g
 else
     outbase       := out
     ccflags       := -O2
-    cxxflags      := -O2 $(WX_CXXFLAGS)
+    cxxflags      := -O2 $(CXXFLAGS) $(WX_CXXFLAGS)
     ldflags       :=
+endif
+
+ifeq ($(host_os),Darwin)
+    # Keep caller-supplied standard flags after the default so they can override it.
+    cxxflags := -std=c++11 $(cxxflags)
 endif
 
 ifneq "$(release)" "yes"

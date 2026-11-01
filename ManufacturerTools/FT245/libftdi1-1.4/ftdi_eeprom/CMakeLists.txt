@@ -47,6 +47,11 @@ if ( CONFUSE_FOUND )
   target_link_libraries ( ftdi_eeprom ${FTDI_TOOLS_LIBRARY} ${CONFUSE_LIBRARIES} )
   if ( LIBINTL_FOUND )
     target_link_libraries ( ftdi_eeprom ${LIBINTL_LIBRARIES} )
+    if ( APPLE AND EASYFLASH_STATIC_TOOLS )
+      # Homebrew's static gettext archive uses macOS's system iconv library.
+      # Unlike the shared library, the archive does not carry that dependency.
+      target_link_libraries ( ftdi_eeprom iconv )
+    endif ()
   endif ()
   install ( TARGETS ftdi_eeprom DESTINATION bin )
   install ( FILES example.conf DESTINATION ${CMAKE_INSTALL_DOCDIR} )
